@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Paste Zip",
+  "version": "1.0",
+  "description": "Automatically compress large pasted text into zip uploads.",
+  "permissions": ["activeTab"],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*",
+        "https://chat.openai.com/*"
+      ],
+      "js": ["jszip.min.js", "content.js"]
+    }
+  ]
+}
