@@ -17,6 +17,7 @@
         --input-bg: #1b1416;
         --input-border: #593324;
         --focus-ring: #ff8a2a66;
+        --logo-shadow: #ff7b1c;
         font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
       }
 
@@ -62,10 +63,18 @@
 
       @keyframes glitchShift {
         0%,
-        100% { transform: translateX(-8px); }
-        25% { transform: translateX(7px); }
-        40% { transform: translateX(-2px); }
-        75% { transform: translateX(5px); }
+        100% {
+          transform: translateX(-8px);
+        }
+        25% {
+          transform: translateX(7px);
+        }
+        40% {
+          transform: translateX(-2px);
+        }
+        75% {
+          transform: translateX(5px);
+        }
       }
 
       .panel {
@@ -82,17 +91,52 @@
       }
 
       .logo {
-        margin: 0 0 4px;
-        font-size: 22px;
+        position: relative;
+        display: inline-block;
+        margin: 0 0 6px;
+        font-size: 24px;
         font-weight: 800;
-        letter-spacing: 1.4px;
+        letter-spacing: 1.8px;
         text-transform: uppercase;
         color: #ffd1ad;
-        text-shadow: 0 0 8px #ff9d4a80;
+        text-shadow:
+          0 0 8px #ff9d4a80,
+          0 0 15px #ff6a0055;
+      }
+
+      .logo::before,
+      .logo::after {
+        content: 'PromptZip';
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      .logo::before {
+        color: #ff6a00;
+        transform: translate(1px, 0);
+        clip-path: polygon(0 0, 100% 0, 100% 44%, 0 51%);
+        opacity: 0.8;
+      }
+
+      .logo::after {
+        color: #ffbb7f;
+        transform: translate(-1px, 0);
+        clip-path: polygon(0 55%, 100% 49%, 100% 100%, 0 100%);
+        opacity: 0.7;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 1.3px;
+        text-transform: uppercase;
+        color: var(--accent-soft);
       }
 
       .tagline {
-        margin: 0 0 14px;
+        margin: 4px 0 14px;
         font-size: 10px;
         letter-spacing: 1.2px;
         text-transform: uppercase;
@@ -100,7 +144,6 @@
       }
 
       .field {
-        margin-top: 10px;
         margin-bottom: 12px;
       }
 
@@ -125,7 +168,7 @@
         border-radius: 10px;
         font-size: 12px;
         font-weight: 600;
-        letter-spacing: 0.4px;
+        letter-spacing: 0.6px;
         outline: none;
         transition: border-color 120ms ease, box-shadow 120ms ease;
       }
@@ -136,20 +179,10 @@
         box-shadow: 0 0 0 3px var(--focus-ring);
       }
 
-      .helper-text {
-        margin-top: 6px;
-        font-size: 10px;
-        line-height: 1.5;
-        opacity: 0.6;
-        letter-spacing: 0.4px;
-      }
-
       .toggle {
         display: flex;
         align-items: center;
         gap: 8px;
-        margin-top: 14px;
-        margin-bottom: 14px;
       }
 
       .toggle label {
@@ -160,58 +193,27 @@
         accent-color: var(--accent-strong);
         width: 16px;
         height: 16px;
-        margin: 0;
       }
 
       #status {
         min-height: 18px;
         font-size: 11px;
         font-weight: 700;
-        letter-spacing: 0.6px;
-        color: var(--accent-soft);
-        opacity: 0;
-        transition: opacity 220ms ease;
-      }
-
-      #status.visible {
-        opacity: 1;
-      }
-
-      .divider {
-        height: 1px;
-        background: linear-gradient(90deg, transparent, #ff8a2a99 22%, #ff8a2a99 78%, transparent);
-        margin: 12px 0 10px;
-      }
-
-      .metrics {
-        font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
-      }
-
-      .metrics-label {
-        margin: 0 0 6px;
-        font-size: 10px;
-        font-weight: 700;
-        letter-spacing: 1px;
+        letter-spacing: 0.7px;
         text-transform: uppercase;
-        color: #ffbc8a;
-      }
-
-      .metrics-value {
-        margin: 0;
-        font-size: 11px;
-        line-height: 1.5;
-        color: #ffd8bd;
-        text-shadow: 0 0 8px #ff7b1c33;
+        color: var(--accent-soft);
+        text-shadow: 0 0 8px #ff7b1c73;
       }
     </style>
   </head>
   <body>
     <div class="panel">
-      <div class="logo">PromptZip</div>
-      <p class="tagline">// Developer compression console //</p>
+      <div class="logo" aria-hidden="true">PromptZip</div>
+      <h1>Compression Console</h1>
+      <p class="tagline">// Live packet squeeze · upload override // </p>
 
       <div class="field">
-        <label for="threshold">Paste Limit (characters)</label>
+        <label for="threshold">Paste Size Threshold (characters)</label>
         <input id="threshold" type="number" min="1" step="1" />
       </div>
 
@@ -221,7 +223,6 @@
           <option value="DEFLATE">DEFLATE</option>
           <option value="STORE">STORE</option>
         </select>
-        <div class="helper-text">DEFLATE — smaller files<br />STORE — faster compression</div>
       </div>
 
       <div class="field toggle">
@@ -230,13 +231,6 @@
       </div>
 
       <div id="status" aria-live="polite"></div>
-
-      <div class="divider" aria-hidden="true"></div>
-
-      <section class="metrics" aria-live="polite">
-        <p class="metrics-label">Last compression</p>
-        <p class="metrics-value" id="metricsValue">STATUS: READY</p>
-      </section>
     </div>
 
     <script src="popup.js"></script>

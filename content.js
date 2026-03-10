@@ -84,7 +84,6 @@
 
     try {
       const zipFile = await createZipFile(pastedText, settings.compressionMode);
-      reportCompressionMetrics(pastedText, zipFile);
       const uploaded = uploadZipToChatGPT(zipFile);
 
       if (!uploaded) {
@@ -108,26 +107,6 @@
     });
 
     return new File([blob], ZIP_FILE_NAME, { type: 'application/zip' });
-  }
-
-
-  function reportCompressionMetrics(rawText, zipFile) {
-    const originalBytes = new Blob([rawText]).size;
-    const zipBytes = zipFile.size;
-    const savedPercent = originalBytes > 0 ? ((originalBytes - zipBytes) / originalBytes) * 100 : 0;
-
-    const payload = {
-      originalBytes,
-      zipBytes,
-      savedPercent,
-      timestamp: Date.now(),
-    };
-
-    chrome.storage.local.set({ promptzipLastCompression: payload });
-    chrome.runtime.sendMessage({
-      type: 'PROMPTZIP_COMPRESSION_METRICS',
-      payload,
-    });
   }
 
   function uploadZipToChatGPT(file) {
