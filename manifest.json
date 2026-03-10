@@ -1,9 +1,9 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Paste Zip",
-  "version": "1.0",
-  "description": "Automatically compress large pasted text into zip uploads.",
-  "permissions": ["activeTab"],
+  "name": "PromptZip",
+  "version": "1.0.0",
+  "description": "Automatically compress large pasted text in ChatGPT and upload it as a ZIP archive.",
+  "permissions": ["storage"],
   "host_permissions": [
     "https://chatgpt.com/*",
     "https://chat.openai.com/*"
@@ -14,7 +14,12 @@
         "https://chatgpt.com/*",
         "https://chat.openai.com/*"
       ],
-      "js": ["jszip.min.js", "content.js"]
+      "js": ["jszip.min.js", "content.js"],
+      "run_at": "document_idle"
     }
-  ]
+  ],
+  "action": {
+    "default_title": "PromptZip",
+    "default_popup": "popup.html"
+  }
 }
