@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PromptZip Settings</title>
+    <style>
+      :root {
+        --bg-outer: #050507;
+        --bg-inner: #131017;
+        --panel-border: #ff8f3f6b;
+        --text-primary: #ffe9d6;
+        --text-muted: #c5a995;
+        --accent: #ff8a2a;
+        --accent-strong: #ff6a00;
+        --accent-soft: #ff9e4f;
+        --input-bg: #1b1416;
+        --input-border: #593324;
+        --focus-ring: #ff8a2a66;
+        font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        padding: 14px;
+        width: 320px;
+        overflow: hidden;
+        background:
+          radial-gradient(circle at 15% 8%, #412010 0%, transparent 40%),
+          radial-gradient(circle at 88% 92%, #54210d 0%, transparent 35%),
+          linear-gradient(155deg, var(--bg-outer), var(--bg-inner));
+        color: var(--text-primary);
+      }
+
+      body::before,
+      body::after {
+        content: '';
+        position: fixed;
+        inset: 0;
+        pointer-events: none;
+      }
+
+      body::before {
+        background: repeating-linear-gradient(
+          180deg,
+          transparent 0,
+          transparent 3px,
+          rgba(255, 134, 39, 0.08) 4px,
+          transparent 5px
+        );
+        opacity: 0.35;
+      }
+
+      body::after {
+        background:
+          linear-gradient(90deg, transparent 0 18%, rgba(255, 101, 0, 0.08) 26%, transparent 35%),
+          linear-gradient(90deg, transparent 0 44%, rgba(255, 186, 130, 0.07) 52%, transparent 64%),
+          linear-gradient(90deg, transparent 0 72%, rgba(255, 82, 0, 0.09) 82%, transparent 92%);
+        animation: glitchShift 2.8s steps(3, jump-none) infinite;
+        opacity: 0.55;
+      }
+
+      @keyframes glitchShift {
+        0%,
+        100% { transform: translateX(-8px); }
+        25% { transform: translateX(7px); }
+        40% { transform: translateX(-2px); }
+        75% { transform: translateX(5px); }
+      }
+
+      .panel {
+        position: relative;
+        z-index: 1;
+        border-radius: 16px;
+        padding: 14px;
+        background: linear-gradient(170deg, #1f181b, #130f12 75%);
+        border: 1px solid var(--panel-border);
+        box-shadow:
+          0 0 0 1px #ff9e4f1f inset,
+          0 10px 25px #050406bf,
+          0 0 20px #ff7b1c2b;
+      }
+
+      .logo {
+        margin: 0 0 4px;
+        font-size: 22px;
+        font-weight: 800;
+        letter-spacing: 1.4px;
+        text-transform: uppercase;
+        color: #ffd1ad;
+        text-shadow: 0 0 8px #ff9d4a80;
+      }
+
+      .tagline {
+        margin: 0 0 14px;
+        font-size: 10px;
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        color: var(--text-muted);
+      }
+
+      .field {
+        margin-top: 10px;
+        margin-bottom: 12px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        text-transform: uppercase;
+        color: #ffd6b8;
+      }
+
+      input[type='number'],
+      select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 9px;
+        background: var(--input-bg);
+        color: var(--text-primary);
+        border: 1px solid var(--input-border);
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 0.4px;
+        outline: none;
+        transition: border-color 120ms ease, box-shadow 120ms ease;
+      }
+
+      input[type='number']:focus,
+      select:focus {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px var(--focus-ring);
+      }
+
+      .helper-text {
+        margin-top: 6px;
+        font-size: 10px;
+        line-height: 1.5;
+        opacity: 0.6;
+        letter-spacing: 0.4px;
+      }
+
+      .toggle {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 14px;
+        margin-bottom: 14px;
+      }
+
+      .toggle label {
+        margin: 0;
+      }
+
+      input[type='checkbox'] {
+        accent-color: var(--accent-strong);
+        width: 16px;
+        height: 16px;
+        margin: 0;
+      }
+
+      #status {
+        min-height: 18px;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.6px;
+        color: var(--accent-soft);
+        opacity: 0;
+        transition: opacity 220ms ease;
+      }
+
+      #status.visible {
+        opacity: 1;
+      }
+
+      .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #ff8a2a99 22%, #ff8a2a99 78%, transparent);
+        margin: 12px 0 10px;
+      }
+
+      .metrics {
+        font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Menlo, Consolas, monospace;
+      }
+
+      .metrics-label {
+        margin: 0 0 6px;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #ffbc8a;
+      }
+
+      .metrics-value {
+        margin: 0;
+        font-size: 11px;
+        line-height: 1.5;
+        color: #ffd8bd;
+        text-shadow: 0 0 8px #ff7b1c33;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <div class="logo">PromptZip</div>
+      <p class="tagline">// Developer compression console //</p>
+
+      <div class="field">
+        <label for="threshold">Paste Limit (characters)</label>
+        <input id="threshold" type="number" min="1" step="1" />
+      </div>
+
+      <div class="field">
+        <label for="compressionMode">Compression Mode</label>
+        <select id="compressionMode">
+          <option value="DEFLATE">DEFLATE</option>
+          <option value="STORE">STORE</option>
+        </select>
+        <div class="helper-text">DEFLATE — smaller files<br />STORE — faster compression</div>
+      </div>
+
+      <div class="field toggle">
+        <input id="enabled" type="checkbox" />
+        <label for="enabled">Enable Extension</label>
+      </div>
+
+      <div id="status" aria-live="polite"></div>
+
+      <div class="divider" aria-hidden="true"></div>
+
+      <section class="metrics" aria-live="polite">
+        <p class="metrics-label">Last compression</p>
+        <p class="metrics-value" id="metricsValue">STATUS: READY</p>
+      </section>
+    </div>
+
+    <script src="popup.js"></script>
+  </body>
+</html>

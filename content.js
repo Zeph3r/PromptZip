@@ -1,91 +1,202 @@
-const LIMIT = 20000;
+(() => {
+  const DEFAULT_SETTINGS = {
+    threshold: 20000,
+    compressionMode: 'DEFLATE',
+    enabled: true,
+  };
 
-console.log("ChatGPT Paste Zip loaded");
+  const ZIP_FILE_NAME = 'chatgpt_paste.zip';
+  const TXT_FILE_NAME = 'pasted_text.txt';
+  const REPLACEMENT_PROMPT =
+    'I uploaded a compressed archive containing the pasted data. Please analyze it.';
 
-waitForTextarea();
+  let settings = { ...DEFAULT_SETTINGS };
+  let observer = null;
 
-function waitForTextarea() {
+  function loadSettings() {
+    return new Promise((resolve) => {
+      chrome.storage.sync.get(DEFAULT_SETTINGS, (stored) => {
+        settings = {
+          threshold: normalizeThreshold(stored.threshold),
+          compressionMode: normalizeCompressionMode(stored.compressionMode),
+          enabled: Boolean(stored.enabled),
+        };
+        resolve(settings);
+      });
+    });
+  }
 
-    const observer = new MutationObserver(() => {
+  function normalizeThreshold(value) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) && parsed > 0 ? Math.floor(parsed) : DEFAULT_SETTINGS.threshold;
+  }
 
-        const textarea = document.querySelector("textarea");
+  function normalizeCompressionMode(value) {
+    return value === 'STORE' || value === 'DEFLATE' ? value : DEFAULT_SETTINGS.compressionMode;
+  }
 
-        if (textarea && !textarea.dataset.zipListenerAttached) {
+  function startObserver() {
+    if (observer) {
+      return;
+    }
 
-            textarea.dataset.zipListenerAttached = "true";
-
-            console.log("Attaching paste handler");
-
-            textarea.addEventListener("paste", handlePaste);
-
-        }
-
+    observer = new MutationObserver(() => {
+      attachHandlerToAllTextareas();
     });
 
     observer.observe(document.body, {
-        childList: true,
-        subtree: true
-    });
-}
-
-async function handlePaste(event) {
-
-    const pastedText = event.clipboardData.getData("text");
-
-    if (!pastedText) return;
-
-    if (pastedText.length < LIMIT) return;
-
-    event.preventDefault();
-
-    console.log("Large paste detected. Compressing...");
-
-    const zip = new JSZip();
-
-    zip.file("pasted_text.txt", pastedText);
-
-    const blob = await zip.generateAsync({
-        type: "blob",
-        compression: "DEFLATE"
+      childList: true,
+      subtree: true,
     });
 
-    const file = new File(
-        [blob],
-        "chatgpt_paste.zip",
-        { type: "application/zip" }
-    );
+    attachHandlerToAllTextareas();
+  }
 
-    uploadFile(file);
+  function attachHandlerToAllTextareas() {
+    const textareas = document.querySelectorAll('textarea');
+    for (const textarea of textareas) {
+      if (textarea.dataset.promptzipPasteListenerAttached === 'true') {
+        continue;
+      }
 
-    replacePrompt();
+      textarea.dataset.promptzipPasteListenerAttached = 'true';
+      textarea.addEventListener('paste', onPaste, true);
+    }
+  }
 
-}
-
-function uploadFile(file) {
-
-    const input = document.querySelector('input[type="file"]');
-
-    if (!input) {
-        console.log("Upload input not found yet.");
-        return;
+  async function onPaste(event) {
+    if (!settings.enabled) {
+      return;
     }
 
-    const dt = new DataTransfer();
-    dt.items.add(file);
+    const clipboardData = event.clipboardData;
+    if (!clipboardData) {
+      return;
+    }
 
-    input.files = dt.files;
+    const pastedText = clipboardData.getData('text/plain') || clipboardData.getData('text');
+    if (!pastedText || pastedText.length <= settings.threshold) {
+      return;
+    }
 
-    input.dispatchEvent(new Event("change", { bubbles: true }));
+    event.preventDefault();
+    event.stopPropagation();
 
-}
+    try {
+      const zipFile = await createZipFile(pastedText, settings.compressionMode);
+      reportCompressionMetrics(pastedText, zipFile);
+      const uploaded = uploadZipToChatGPT(zipFile);
 
-function replacePrompt() {
+      if (!uploaded) {
+        console.warn('PromptZip: Could not find ChatGPT file input for upload.');
+        return;
+      }
 
-    const textarea = document.querySelector("textarea");
+      setPromptText(REPLACEMENT_PROMPT, event.currentTarget);
+    } catch (error) {
+      console.error('PromptZip: Failed to process pasted text.', error);
+    }
+  }
 
-    if (!textarea) return;
+  async function createZipFile(content, compressionMode) {
+    const zip = new JSZip();
+    zip.file(TXT_FILE_NAME, content);
 
-    textarea.value =
-        "I uploaded a compressed archive containing the pasted data. Please analyze it.";
+    const blob = await zip.generateAsync({
+      type: 'blob',
+      compression: compressionMode,
+    });
 
-}
+    return new File([blob], ZIP_FILE_NAME, { type: 'application/zip' });
+  }
+
+
+  function reportCompressionMetrics(rawText, zipFile) {
+    const originalBytes = new Blob([rawText]).size;
+    const zipBytes = zipFile.size;
+    const savedPercent = originalBytes > 0 ? ((originalBytes - zipBytes) / originalBytes) * 100 : 0;
+
+    const payload = {
+      originalBytes,
+      zipBytes,
+      savedPercent,
+      timestamp: Date.now(),
+    };
+
+    chrome.storage.local.set({ promptzipLastCompression: payload });
+    chrome.runtime.sendMessage({
+      type: 'PROMPTZIP_COMPRESSION_METRICS',
+      payload,
+    });
+  }
+
+  function uploadZipToChatGPT(file) {
+    const fileInput = findUploadInput();
+    if (!fileInput) {
+      return false;
+    }
+
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    fileInput.files = dataTransfer.files;
+    fileInput.dispatchEvent(new Event('change', { bubbles: true }));
+
+    return true;
+  }
+
+  function findUploadInput() {
+    const inputs = document.querySelectorAll('input[type="file"]');
+    for (const input of inputs) {
+      if (input.disabled) {
+        continue;
+      }
+      return input;
+    }
+    return null;
+  }
+
+  function setPromptText(message, sourceTextarea) {
+    const textarea = sourceTextarea instanceof HTMLTextAreaElement ? sourceTextarea : document.querySelector('textarea');
+    if (!textarea) {
+      return;
+    }
+
+    textarea.focus();
+    textarea.value = message;
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+  }
+
+  chrome.storage.onChanged.addListener((changes, areaName) => {
+    if (areaName !== 'sync') {
+      return;
+    }
+
+    if (changes.threshold) {
+      settings.threshold = normalizeThreshold(changes.threshold.newValue);
+    }
+
+    if (changes.compressionMode) {
+      settings.compressionMode = normalizeCompressionMode(changes.compressionMode.newValue);
+    }
+
+    if (changes.enabled) {
+      settings.enabled = Boolean(changes.enabled.newValue);
+    }
+  });
+
+  loadSettings().then(() => {
+    if (document.body) {
+      startObserver();
+      return;
+    }
+
+    window.addEventListener(
+      'DOMContentLoaded',
+      () => {
+        startObserver();
+      },
+      { once: true }
+    );
+  });
+})();
