@@ -10,40 +10,23 @@ PromptZip automates this process.
 
 Instead of manually compressing files, the extension allows you to paste large text and convert it into a compressed archive instantly.
 
-## Example Use Cases
+## Load unpacked
 
-• Large documentation dumps  
-• Long code snippets  
-• Dataset analysis  
-• Research notes  
-• Large prompts that exceed typical paste limits  
+1. Open `chrome://extensions`
+2. Enable **Developer mode**
+3. **Load unpacked** → select this folder
 
-## Example Test
+## Store submission
 
-Initial testing used a **225 KB dataset** consisting of repeated paragraphs.
+See **[STORE.md](./STORE.md)** for packaging, permission justifications, listing copy, and checklist.
 
-Results:
+- **Privacy:** [PRIVACY.md](./PRIVACY.md) — host the same text at a public URL for the store.
+- **Third-party:** [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md)
 
-Raw text: ~225 KB  
-Compressed archive: dramatically smaller  
-ChatGPT was able to analyze the contents successfully.
+## Package for upload
 
-Further testing is planned with:
+```bash
+./package-extension.sh
+```
 
-• code repositories  
-• API documentation  
-• larger datasets
-
-## Roadmap
-
-Future improvements may include:
-
-- automatic prompt compression
-- prompt chunking for very large datasets
-- auto-decompression for shared compressed prompts
-
-## Status
-
-Early prototype.
-
-More testing and improvements coming soon.
+Produces `promptzip-store.zip` in the project root.

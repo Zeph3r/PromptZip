@@ -42,9 +42,13 @@ PromptZip **never uploads or stores this content**.
 
 PromptZip may request limited browser permissions required to function.
 
-### Active Tab / Page Access
+### Site access (ChatGPT domains)
 
-Used only to detect pasted content and enable compression within supported pages.
+PromptZip requests access to ChatGPT domains listed in the extension manifest (such as `https://chatgpt.com/*` and `https://chat.openai.com/*`). This is used **only** to:
+
+* detect when you paste large text into the ChatGPT prompt box
+* build a ZIP in your browser
+* attach that ZIP via ChatGPT's file input
 
 ### Storage
 
@@ -52,9 +56,10 @@ Used to save local extension settings such as:
 
 * paste size limit
 * compression mode
-* extension enable/disable state
+* whether the extension is enabled
+* optional message inserted after upload
 
-These settings are stored **locally within the browser**.
+These settings are stored **locally within the browser** using `chrome.storage` and are not sent to PromptZip servers.
 
 ---
 
